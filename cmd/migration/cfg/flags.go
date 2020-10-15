@@ -1,8 +1,9 @@
 package cfg
 
 import (
-	"github.com/spf13/viper"
 	"strings"
+
+	"github.com/spf13/viper"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
@@ -26,7 +27,7 @@ func ParseAllFlags() error {
 }
 
 func parseCommandLineFlags() {
-	pflag.String(PostgreURL, "postgres://schedule:0000@localhost:5432/starry?sslmode=disable", "address for postgre, dsn")
+	pflag.String(PostgreURL, "postgres://scheduler:0000@localhost:5432/starry?sslmode=disable", "address for postgre, dsn")
 	pflag.String(MigrationsPath, "file://./cmd/migration/migrations", "path to migrations")
 	pflag.Parse()
 }

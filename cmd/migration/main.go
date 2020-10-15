@@ -4,6 +4,7 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/joho/godotenv/autoload"
 	"github.com/starrybarry/schedule/cmd/migration/cfg"
 	"go.uber.org/zap"
 )

@@ -35,7 +35,7 @@ func parseCommandLineFlags() {
 	pflag.String(ServeAddr, ":8080", fmt.Sprintf(" serve addr\n env: %s\n", ServeAddr))
 	pflag.String(ServeName, "scheduler", fmt.Sprintf(" serve name\n env: %s\n", ServeAddr))
 	//
-	pflag.String(PostgreURL, "postgres://schedule:0000@localhost:5432/starry", "address for postgre, dsn")
+	pflag.String(PostgreURL, "postgres://scheduler:0000@localhost:5432/scheduler", "address for postgre, dsn")
 
 	pflag.Parse()
 }

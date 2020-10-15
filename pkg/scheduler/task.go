@@ -1,8 +1,6 @@
 package scheduler
 
-import "time"
-
 type Task struct {
-	ID     string
-	DateAt time.Time
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }

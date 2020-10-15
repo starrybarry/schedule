@@ -6,10 +6,13 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/starrybarry/schedule/internal/scheduler"
+
 	"syscall"
 	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
+	_ "github.com/joho/godotenv/autoload"
 	"github.com/pkg/errors"
 	"github.com/rs/cors"
 	"github.com/starrybarry/schedule/cmd/scheduler/cfg"
@@ -60,7 +63,9 @@ func main() {
 
 	log.Info("postgre created pool!", zap.String("url", config.Postgre.URL))
 
-	handlerHTTP := handler.NewHttpHandler(log)
+	schStorage := scheduler.NewTaskStorage(pgxPool, log)
+	schService := scheduler.NewService(schStorage)
+	handlerHTTP := handler.NewHttpHandler(schService, log)
 
 	if config.DebugMode {
 		handlerHTTP = cors.AllowAll().Handler(handlerHTTP)

@@ -1,21 +1,35 @@
 package handler
 
 import (
+	"context"
 	"net/http"
+
+	"github.com/starrybarry/schedule/pkg/scheduler"
 
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 )
 
+type schedulerSV interface {
+	AddTask(ctx context.Context, task scheduler.Task) error
+	DeleteTask(ctx context.Context, task scheduler.Task) error
+}
+
 type handler struct {
-	log *zap.Logger
+	schedulerSV schedulerSV
+	extractor   extractor
+	log         *zap.Logger
 }
 
-func newHandler(log *zap.Logger) handler {
-	return handler{log: log}
+func newHandler(schedulerSv schedulerSV, log *zap.Logger) handler {
+	return handler{
+		extractor:   newExtractor(),
+		schedulerSV: schedulerSv,
+		log:         log,
+	}
 }
 
-func NewHttpHandler(log *zap.Logger) http.Handler {
+func NewHttpHandler(schedulerSv schedulerSV, log *zap.Logger) http.Handler {
 	newRouter := mux.NewRouter()
 
 	newRouter.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -23,7 +37,7 @@ func NewHttpHandler(log *zap.Logger) http.Handler {
 		http.NotFound(w, r)
 	})
 
-	handler := newHandler(log)
+	handler := newHandler(schedulerSv, log)
 
 	newRouter.HandleFunc("/task", handler.AddTask).
 		Name("add_task").Methods(http.MethodPost)
