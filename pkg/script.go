@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -16,5 +17,10 @@ func main() {
 		Name:     "create",
 	})
 
-	http.Post("http://localhost:8080/tasks", "application/json", bytes.NewBuffer(b))
+	r, _ := http.Post("http://localhost:8080/tasks", "application/json", bytes.NewBuffer(b))
+
+	var k interface{}
+	jsoniter.NewDecoder(r.Body).Decode(&k)
+
+	fmt.Println(k)
 }

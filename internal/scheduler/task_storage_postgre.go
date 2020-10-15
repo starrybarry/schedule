@@ -28,6 +28,8 @@ func (ts *TaskStorage) AddTask(ctx context.Context, task scheduler.Task) error {
 		return fmt.Errorf("acquire connect, error: %w", err)
 	}
 
+	defer conn.Release()
+
 	row := conn.QueryRow(ctx,
 		"INSERT into tasks (name,exec_time,created_at) "+
 			"VALUES ($1, $2, $3) RETURNING id", task.Name, task.ExecTime, time.Now())
@@ -50,6 +52,8 @@ func (ts *TaskStorage) DeleteTask(ctx context.Context, task scheduler.Task) erro
 		return fmt.Errorf("acquire connect, error: %w", err)
 	}
 
+	defer conn.Release()
+
 	row := conn.QueryRow(ctx,
 		"DELETE FROM tasks"+
 			"WHERE id = $1", task.ID)
@@ -71,6 +75,8 @@ func (ts *TaskStorage) GetTasks(ctx context.Context) ([]scheduler.Task, error) {
 	if err != nil {
 		return nil, fmt.Errorf("acquire connect, error: %w", err)
 	}
+
+	defer conn.Release()
 
 	rows, err := conn.Query(ctx,
 		"SELECT id,name,exec_time FROM tasks"+
