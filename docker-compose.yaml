@@ -9,6 +9,8 @@ networks:
 volumes:
   postgres-storage:
     driver: local
+  rabbitmq-storage:
+    driver: local
 
 services:
   postgres:
@@ -23,3 +25,18 @@ services:
     environment:
       POSTGRES_USER: social
       POSTGRES_PASSWORD: tech
+
+  rabbitmq:
+    image: 'rabbitmq:3-management'
+    container_name: rabbitmq
+    hostname: 'rabbitmq'
+    environment:
+      RABBITMQ_ERLANG_COOKIE: 'SWQOKODSQALRPCLNMEQG'
+      RABBITMQ_DEFAULT_USER: 'rabbitmq'
+      RABBITMQ_DEFAULT_PASS: 'rabbitmq'
+      RABBITMQ_DEFAULT_VHOST: '/'
+    ports:
+      - '15672:15672'
+      - '5672:5672'
+    volumes:
+      - rabbitmq-storage

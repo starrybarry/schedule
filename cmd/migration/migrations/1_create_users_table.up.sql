@@ -1,6 +1,7 @@
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE IF NOT EXISTS tasks (
                        id serial  PRIMARY KEY,
-                       name    varchar(40),
-                       email   varchar(40)
+                       exec_time    timestamp,
+                       name varchar(120),
+                       created_at timestamp
 );
 

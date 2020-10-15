@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	jsoniter "github.com/json-iterator/go"
+
 	"github.com/starrybarry/schedule/pkg/scheduler"
 
 	"github.com/gorilla/mux"
@@ -29,6 +31,41 @@ func newHandler(schedulerSv schedulerSV, log *zap.Logger) handler {
 	}
 }
 
+func (h *handler) success(w http.ResponseWriter, body []byte) {
+	code := http.StatusOK
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(code)
+
+	_, err := w.Write(body)
+	if err != nil {
+		h.log.Error("failed writing response", zap.Error(err), zap.ByteString("body", body))
+		return
+	}
+
+	h.log.Debug("send body complete: ", zap.ByteString("body", body))
+}
+
+func (h *handler) failed(w http.ResponseWriter, v interface{}, code int) {
+	body, err := jsoniter.ConfigCompatibleWithStandardLibrary.Marshal(v)
+	if err != nil {
+		h.log.Error("failed to marshal response")
+
+		code = http.StatusInternalServerError
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.WriteHeader(code)
+
+	_, err = w.Write(body)
+	if err != nil {
+		h.log.Error("failed writing response", zap.Error(err), zap.ByteString("body", body))
+	}
+
+	h.log.Debug("send error complete: ", zap.ByteString("body", body))
+}
+
 func NewHttpHandler(schedulerSv schedulerSV, log *zap.Logger) http.Handler {
 	newRouter := mux.NewRouter()
 
@@ -39,10 +76,10 @@ func NewHttpHandler(schedulerSv schedulerSV, log *zap.Logger) http.Handler {
 
 	handler := newHandler(schedulerSv, log)
 
-	newRouter.HandleFunc("/task", handler.AddTask).
+	newRouter.HandleFunc("/tasks", handler.AddTask).
 		Name("add_task").Methods(http.MethodPost)
 
-	newRouter.HandleFunc("/task", handler.DeleteTask).
+	newRouter.HandleFunc("/tasks/{id}", handler.DeleteTask).
 		Name("delete_task").Methods(http.MethodDelete)
 
 	return newRouter

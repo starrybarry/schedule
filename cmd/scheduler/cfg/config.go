@@ -2,6 +2,7 @@ package cfg
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -30,8 +31,15 @@ type Config struct {
 	DebugMode   bool   `mapstructure:"debug"`
 
 	Postgre `mapstructure:",squash"`
+	Rabbit  `mapstructure:",squash"`
 }
 
 type Postgre struct {
 	URL string `mapstructure:"postgre-url"`
+}
+
+type Rabbit struct {
+	DSN       string        `mapstructure:"rabbitmq-dsn"`
+	Exchange  string        `mapstructure:"rabbit-exchange"`
+	Heartbeat time.Duration `mapstructure:"rabbit-heartbeat"`
 }

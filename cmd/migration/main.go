@@ -19,7 +19,7 @@ func main() {
 
 	log.Info("config", zap.Any("postgre", config.Postgre))
 
-	m, err := migrate.New(config.Postgre.MigrationsPath, config.Postgre.URL)
+	m, err := migrate.New(config.Postgre.MigrationsPath, config.Postgre.URL+"?sslmode=disable")
 	if err != nil {
 		log.Fatal("new migrate", zap.Error(err))
 	}

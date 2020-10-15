@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/starrybarry/schedule/internal/amqplb"
+
 	"github.com/starrybarry/schedule/internal/scheduler"
 
 	"syscall"
@@ -20,28 +22,6 @@ import (
 	"go.uber.org/zap"
 )
 
-//Implement distributed task scheduler.
-//
-//Scheduler should allow to add tasks to scheduler and execute them on specified time;
-//
-//Task scheduling time intervals should be not larger than 30-40 seconds;
-//
-//Scheduler processing unit should be scalable and work properly when more than one instance is running;
-//
-//Scheduler should be fault-tolerant;
-//
-//It should be complaint with Twelve-Factor App methodology;
-//
-//Scheduler should properly operate with large number of scheduled tasks, >1k tasks with different time;
-//
-//Provide benchmark tests and unit tests;
-//
-//Task should consist of package with scheduler library and command line example app which uses the lib and demonstrates it’s features;
-//
-//It’s allowed to use external storages, 3rd-party libs, etc;
-//
-//Provide docker compose file or readme if it’s required.
-
 func main() {
 	rootCtx, cancel := context.WithCancel(context.Background())
 
@@ -53,6 +33,19 @@ func main() {
 	if err != nil {
 		log.Fatal("new config", zap.Error(err))
 	}
+
+	clientAMQP := amqplb.NewClient(config.Rabbit.DSN, config.Rabbit.Heartbeat)
+	if err = clientAMQP.Connect(); err != nil {
+		log.Fatal("connect rabbit", zap.Error(err), zap.String("rabbit_dsn", config.Rabbit.DSN))
+	}
+
+	amqpClose := func() {
+		if errr := clientAMQP.Close(); errr != nil {
+			log.Error("close client amqp", zap.Error(errr))
+		}
+	}
+
+	defer amqpClose()
 
 	pgxPool, err := pgxpool.Connect(rootCtx, config.Postgre.URL)
 	if err != nil {
