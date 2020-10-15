@@ -10,7 +10,8 @@ import (
 )
 
 type storage interface {
-	GetTasks(ctx context.Context) ([]scheduler.Task, error)
+	GetActualTasks(ctx context.Context) ([]scheduler.Task, error)
+	UpdateTask(ctx context.Context, task scheduler.Task) error
 }
 
 type publisher interface {
@@ -37,7 +38,7 @@ func (m *Manager) PollingTaskAndPublish(ctx context.Context) error {
 		case <-t.C:
 			t.Reset(m.pollingTimer)
 
-			tasks, err := m.storage.GetTasks(ctx)
+			tasks, err := m.storage.GetActualTasks(ctx)
 			if err != nil {
 				return fmt.Errorf("get task, error: %w", err)
 			}
@@ -45,6 +46,12 @@ func (m *Manager) PollingTaskAndPublish(ctx context.Context) error {
 			for _, task := range tasks {
 				if err := m.publisher.PublishTask(task); err != nil {
 					return fmt.Errorf("publish task, error: %w", err)
+				}
+
+				task.InProgress = true
+
+				if err := m.storage.UpdateTask(ctx, task); err != nil {
+					return fmt.Errorf("update task, error: %w", err)
 				}
 			}
 

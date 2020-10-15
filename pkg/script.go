@@ -11,16 +11,13 @@ import (
 )
 
 func main() {
+	for i := range [50]struct{}{} {
+		b, _ := jsoniter.ConfigCompatibleWithStandardLibrary.Marshal(&scheduler.Task{
+			ExecTime: time.Now().Add(time.Duration(i) + time.Second),
+			Name:     fmt.Sprintf("create task #%d", i),
+		})
 
-	b, _ := jsoniter.ConfigCompatibleWithStandardLibrary.Marshal(&scheduler.Task{
-		ExecTime: time.Now(),
-		Name:     "create",
-	})
+		http.Post("http://localhost:8080/tasks", "application/json", bytes.NewBuffer(b))
+	}
 
-	r, _ := http.Post("http://localhost:8080/tasks", "application/json", bytes.NewBuffer(b))
-
-	var k interface{}
-	jsoniter.NewDecoder(r.Body).Decode(&k)
-
-	fmt.Println(k)
 }

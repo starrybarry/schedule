@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
+
+	"github.com/starrybarry/schedule/internal/workerpool"
 
 	"github.com/starrybarry/schedule/internal/amqplb"
 
@@ -21,6 +24,8 @@ import (
 	"github.com/starrybarry/schedule/cmd/scheduler/handler"
 	"go.uber.org/zap"
 )
+
+const exchangeName = "tasks"
 
 func main() {
 	rootCtx, cancel := context.WithCancel(context.Background())
@@ -58,6 +63,39 @@ func main() {
 
 	schStorage := scheduler.NewTaskStorage(pgxPool, log)
 	schService := scheduler.NewService(schStorage)
+
+	publisher := clientAMQP.Publisher()
+
+	if err := publisher.Setup(exchangeName, amqplb.NewDefaultPublisherOptions()); err != nil {
+		log.Fatal("setup publisher", zap.Error(err))
+	}
+
+	consumer, err := clientAMQP.Consumer(exchangeName)
+	if err != nil {
+		log.Fatal("get consumer", zap.Error(err))
+	}
+
+	if err := consumer.SubscribeOn(exchangeName, "tasks", amqplb.NewDefaultSubscribeOptions()); err != nil {
+		log.Fatal("consumer subscribe", zap.Error(err))
+	}
+
+	bus := workerpool.NewBus(exchangeName, publisher, consumer, log)
+	manager := workerpool.NewManager(30*time.Second, schStorage, bus, log)
+
+	go func() {
+		if err := manager.PollingTaskAndPublish(rootCtx); err != nil {
+			streamErr <- fmt.Errorf("manager stopped polling task and publish, error: %w", err)
+		}
+	}()
+
+	workerPool := workerpool.NewWorkerPool(bus, schStorage, log)
+
+	go func() {
+		if err := workerPool.Start(rootCtx); err != nil {
+			streamErr <- fmt.Errorf("worker pool stoped, error: %w", err)
+		}
+	}()
+
 	handlerHTTP := handler.NewHttpHandler(schService, log)
 
 	if config.DebugMode {
