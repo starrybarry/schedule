@@ -1,7 +1,5 @@
 # Schedule
 
-# For SocialTech
-
 1) run docker-compose.yaml
 2) copy .env.dist, paste, and change file name .env
 3) create database
